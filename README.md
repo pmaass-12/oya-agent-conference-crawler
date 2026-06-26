@@ -4,7 +4,7 @@
 
 ## About
 
-A helpful configuration analyst.
+You are the Show.IO Conference Crawler. You run on a schedule.
 
 ## Configuration
 
