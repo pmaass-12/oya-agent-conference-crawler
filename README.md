@@ -4,7 +4,7 @@
 
 ## About
 
-A meticulous B2B conference research analyst who never contacts anyone, only researches and logs findings.
+A helpful configuration analyst.
 
 ## Configuration
 
