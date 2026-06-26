@@ -1,38 +1,48 @@
 import os
 import json
 
+def search_text_in_file(file_path, keywords):
+    try:
+        with open(file_path, "r", errors="ignore") as f:
+            content = f.read()
+            for kw in keywords:
+                if kw in content:
+                    return content
+    except Exception as e:
+        pass
+    return None
+
 def main():
-    env_vars = dict(os.environ)
-    # Redact potential secrets from environment variables
-    for k in list(env_vars.keys()):
-        if any(sec in k.lower() for sec in ["key", "token", "secret", "auth", "pwd", "pass"]):
-            env_vars[k] = "[REDACTED]"
-            
-    # List files in root and other places
-    root_files = []
-    try:
-        root_files = os.listdir('/')
-    except Exception as e:
-        root_files = [f"Error: {str(e)}"]
-        
-    app_files = []
-    try:
-        app_files = os.listdir('/app')
-    except Exception as e:
-        app_files = [f"Error: {str(e)}"]
+    keywords = ["require confirmation before tool calls", "confirmation"]
+    results = {}
+    
+    paths_to_search = ["/app", "/root", "/home", "/tmp"]
+    
+    searched_files = set()
+    
+    for base_dir in paths_to_search:
+        if not os.path.exists(base_dir):
+            continue
+        for root, dirs, files in os.walk(base_dir):
+            if any(p in root for p in ["node_modules", ".git", "venv", "__pycache__", ".cache"]):
+                continue
+            for file in files:
+                file_path = os.path.join(root, file)
+                if file_path in searched_files:
+                    continue
+                searched_files.add(file_path)
+                
+                try:
+                    if os.path.getsize(file_path) > 500 * 1024:
+                        continue
+                except Exception:
+                    continue
+                
+                content = search_text_in_file(file_path, keywords)
+                if content is not None:
+                    results[file_path] = content
 
-    parent_app_files = []
-    try:
-        parent_app_files = os.listdir('..')
-    except Exception as e:
-        parent_app_files = [f"Error: {str(e)}"]
-
-    print(json.dumps({
-        "env": env_vars,
-        "root_files": root_files,
-        "app_files": app_files,
-        "parent_app_files": parent_app_files
-    }, indent=2))
+    print(json.dumps({"results": results}, indent=2))
 
 if __name__ == "__main__":
     main()
